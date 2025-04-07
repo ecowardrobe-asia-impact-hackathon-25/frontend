@@ -7,13 +7,11 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card } from '../components/common/Card';
-import { Button } from '../components/common/Button';
-import { Text } from '../components/common/Text';
-import { theme } from '../constants/theme';
+import { Card } from '../../components/common/Card';
+import { Text } from '../../components/common/Text';
+import { theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { PlaceholderImage } from '../components/common/PlaceholderImage';
-import { MainTabScreenProps } from '../types/navigation';
+import { PlaceholderImage } from '../../components/common/PlaceholderImage';
 
 const { width } = Dimensions.get('window');
 
@@ -68,7 +66,7 @@ const categories = [
   { id: 'recommend', label: 'recommend', icon: 'thumbs-up-outline', count: 0 },
 ];
 
-export default function ProfileScreen({ navigation }: MainTabScreenProps<'Profile'>) {
+export default function ProfileScreen() {
   const handleSignOut = () => {
     console.log('Sign out');
   };

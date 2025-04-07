@@ -4,7 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  width,
+  // width,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Card } from '../components/common/Card';
@@ -12,8 +12,9 @@ import { Button } from '../components/common/Button';
 import { Text } from '../components/common/Text';
 import { theme } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { RootStackScreenProps } from '../types/navigation';
 import { PlaceholderImage } from '../components/common/PlaceholderImage';
+import { Item } from '@/types/item';
+import { useRouter } from 'expo-router';
 
 // Placeholder data for AI analysis
 const aiAnalysis = {
@@ -36,8 +37,9 @@ const compatibleItems = [
   { id: 4, name: 'Brown Leather Boots', category: 'Footwear', sustainabilityScore: 65 },
 ];
 
-export default function UploadScreen({ navigation }: RootStackScreenProps<'Upload'>) {
+export default function UploadScreen() {
   const [image, setImage] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleCapture = () => {
     // TODO: Implement camera capture
@@ -54,10 +56,10 @@ export default function UploadScreen({ navigation }: RootStackScreenProps<'Uploa
   const handleAddToWardrobe = () => {
     // TODO: Implement adding to wardrobe
     console.log('Add to wardrobe');
-    navigation.navigate('MatchResults');
+    router.navigate('MatchResults');
   };
 
-  const renderCompatibleItem = (item) => (
+  const renderCompatibleItem = (item: Item) => (
     <Card key={item.id} style={styles.compatibleCard}>
       <PlaceholderImage
         width="100%"
@@ -83,7 +85,7 @@ export default function UploadScreen({ navigation }: RootStackScreenProps<'Uploa
       style={styles.container}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text variant="h2">
@@ -381,7 +383,8 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
   },
   compatibleCard: {
-    width: width * 0.4,
+    // width: width * 0.4,
+    width: "40%",
     marginRight: 12,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 16,

@@ -7,12 +7,11 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card } from '../components/common/Card';
-import { Text } from '../components/common/Text';
-import { theme } from '../constants/theme';
+import { Card } from '../../components/common/Card';
+import { Text } from '../../components/common/Text';
+import { theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { PlaceholderImage } from '../components/common/PlaceholderImage';
-import { MainTabScreenProps } from '../types/navigation';
+import { PlaceholderImage } from '../../components/common/PlaceholderImage';
 
 const { width } = Dimensions.get('window');
 
@@ -52,7 +51,7 @@ const outfitSuggestions = [
   }
 ];
 
-export default function MixMatchScreen({ navigation }: MainTabScreenProps<'MixMatch'>) {
+export default function MixMatchScreen() {
   const [selectedStyle, setSelectedStyle] = useState('casual');
 
   const handleRegenerate = () => {

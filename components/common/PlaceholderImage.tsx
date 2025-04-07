@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, ViewStyle } from 'react-native';
 import { theme } from '../../constants/theme';
 
 interface PlaceholderImageProps {
-  width: number | string;
+  width: ViewStyle['width'];
   height: number;
   borderRadius?: number;
   text?: string;

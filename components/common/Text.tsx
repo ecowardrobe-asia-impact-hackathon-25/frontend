@@ -1,10 +1,10 @@
 import React from 'react';
-import { Text as RNText, TextStyle, StyleSheet } from 'react-native';
+import { Text as RNText, TextStyle, StyleSheet, StyleProp } from 'react-native';
 import { theme } from '../../constants/theme';
 
 interface TextProps {
   children: React.ReactNode;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
   variant?: 'h1' | 'h2' | 'h3' | 'body' | 'caption';
 }
 

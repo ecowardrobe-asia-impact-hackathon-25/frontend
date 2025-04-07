@@ -3,10 +3,11 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { CustomTabBar } from '@/components/BottomTabs';
+import { theme } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -14,7 +15,6 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
@@ -25,19 +25,40 @@ export default function TabLayout() {
           },
           default: {},
         }),
-      }}>
+        tabBarShowLabel: false,
+      }}
+      tabBar={props => <CustomTabBar {...props} />}
+      >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ focused }) => (
+            <Ionicons name="home-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="wardrobe"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarIcon: ({ focused }) => (
+            <Ionicons name="shirt-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="mix-match"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <Ionicons name="color-wand-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <Ionicons name="person-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
+          ),
         }}
       />
     </Tabs>

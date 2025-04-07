@@ -12,17 +12,18 @@ import { Text } from '../components/common/Text';
 import { theme } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { PlaceholderImage } from '../components/common/PlaceholderImage';
-import { AuthStackScreenProps } from '../types/navigation';
+import { useRouter } from 'expo-router';
 
-export default function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigation = useRouter();
 
   const handleLogin = () => {
     // TODO: Implement actual login logic
     console.log('Login:', { email, password });
     // For now, just navigate to main app
-    navigation.navigate('Main' as any);
+    navigation.navigate('/');
   };
 
   return (
@@ -102,7 +103,8 @@ export default function LoginScreen({ navigation }: AuthStackScreenProps<'Login'
 
           <View style={styles.registerContainer}>
             <Text variant="caption">Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            {/* TODO: Implement actual registration logic */}
+            <TouchableOpacity onPress={() => navigation.navigate('/')}>
               <Text style={{ color: theme.colors.primary }}>Sign Up</Text>
             </TouchableOpacity>
           </View>

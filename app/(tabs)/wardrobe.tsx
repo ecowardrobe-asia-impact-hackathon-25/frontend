@@ -9,12 +9,12 @@ import {
   Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card } from '../components/common/Card';
-import { Text } from '../components/common/Text';
-import { theme } from '../constants/theme';
+import { Card } from '../../components/common/Card';
+import { Text } from '../../components/common/Text';
+import { theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { PlaceholderImage } from '../components/common/PlaceholderImage';
-import { MainTabScreenProps } from '../types/navigation';
+import { PlaceholderImage } from '../../components/common/PlaceholderImage';
+import { Item } from '@/types/item';
 
 const { width } = Dimensions.get('window');
 
@@ -55,21 +55,21 @@ const items = [
   { id: 6, name: 'Beige Chino Pants', category: 'Bottoms', sustainabilityScore: 82 },
 ];
 
-export default function WardrobeScreen({ navigation }: MainTabScreenProps<'Wardrobe'>) {
+export default function WardrobeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
 
   const filteredItems = selectedCategory === 'all' 
     ? items 
     : items.filter(item => item.category.toLowerCase() === selectedCategory);
 
-  const handleItemPress = (item) => {
+  const handleItemPress = (item: Item) => {
     setSelectedItem(item);
     setIsAnalysisVisible(true);
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: Item }) => (
     <TouchableOpacity 
       style={styles.itemCard}
       onPress={() => handleItemPress(item)}
@@ -91,7 +91,7 @@ export default function WardrobeScreen({ navigation }: MainTabScreenProps<'Wardr
     </TouchableOpacity>
   );
 
-  const renderCompatibleItem = (item) => (
+  const renderCompatibleItem = (item: Item) => (
     <Card key={item.id} style={styles.compatibleCard}>
       <PlaceholderImage
         width="100%"

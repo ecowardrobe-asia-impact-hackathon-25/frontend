@@ -1,21 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
-import { MainTabParamList } from '../types/navigation';
 import { PlaceholderImage } from '../components/common/PlaceholderImage';
 
-// Import screens
-import HomeScreen from '../app/index';
-import WardrobeScreen from '../app/wardrobe';
-import ProfileScreen from '../app/profile';
-import MixMatchScreen from '../app/mix-match';
-
-const Tab = createBottomTabNavigator<MainTabParamList>();
-const { width } = Dimensions.get('window');
-
-function CustomTabBar({ state, descriptors, navigation }) {
+export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.tabBarContainer}>
@@ -46,17 +36,17 @@ function CustomTabBar({ state, descriptors, navigation }) {
               />
             );
           } else {
-            icon = (
-              <Ionicons
-                name={options.tabBarIcon({ 
-                  focused: isFocused, 
-                  color: '', 
-                  size: 0 
-                }).props.name}
-                size={24}
-                color={isFocused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'}
-              />
-            );
+            // icon = (
+            //   <Ionicons
+            //     name={options.tabBarIcon({ 
+            //       focused: isFocused, 
+            //       color: '', 
+            //       size: 0 
+            //     }).props.name}
+            //     size={24}
+            //     color={isFocused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'}
+            //   />
+            // );
           }
 
           return (
@@ -84,54 +74,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
   );
 }
 
-export function MainTabNavigator() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-      }}
-      tabBar={props => <CustomTabBar {...props} />}
-    >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons name="home-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Wardrobe"
-        component={WardrobeScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons name="shirt-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="MixMatch"
-        component={MixMatchScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons name="color-wand-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons name="person-outline" size={24} color={focused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {

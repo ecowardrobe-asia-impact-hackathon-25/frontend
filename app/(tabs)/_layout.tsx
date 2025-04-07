@@ -4,14 +4,11 @@ import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { CustomTabBar } from '@/components/BottomTabs';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{

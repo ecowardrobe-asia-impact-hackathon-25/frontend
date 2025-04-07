@@ -36,17 +36,13 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               />
             );
           } else {
-            // icon = (
-            //   <Ionicons
-            //     name={options.tabBarIcon({ 
-            //       focused: isFocused, 
-            //       color: '', 
-            //       size: 0 
-            //     }).props.name}
-            //     size={24}
-            //     color={isFocused ? theme.colors.primary : 'rgba(255, 255, 255, 0.5)'}
-            //   />
-            // );
+            icon = (
+              options.tabBarIcon?.({ 
+                focused: isFocused, 
+                color: '', 
+                size: 24 
+              })
+            );
           }
 
           return (

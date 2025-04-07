@@ -62,7 +62,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
       <TouchableOpacity 
         style={styles.addButton}
-        onPress={() => navigation.navigate('Upload')}
+        onPress={() => navigation.navigate('upload')}
       >
         <Ionicons name="add" size={24} color={theme.colors.white} />
       </TouchableOpacity>

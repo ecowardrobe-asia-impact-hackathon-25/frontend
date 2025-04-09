@@ -41,7 +41,7 @@ const compatibleItems = [
 const categories = [
   { id: 'tops', label: 'tops', icon: 'shirt-outline' },
   { id: 'bottoms', label: 'bottoms', icon: 'layers-outline' },
-  { id: 'outerwear', label: 'outerwear', icon: 'jacket-outline' },
+  // { id: 'outerwear', label: 'outerwear', icon: 'jacket-outline' },
   { id: 'footwear', label: 'footwear', icon: 'footsteps-outline' },
   { id: 'accessories', label: 'accessories', icon: 'watch-outline' },
 ];

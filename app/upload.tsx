@@ -4,7 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  // width,
+  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Card } from "../components/common/Card";
@@ -17,6 +17,8 @@ import { Item } from "@/types/item";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
+
+const { width } = Dimensions.get("window");
 
 // Placeholder data for AI analysis
 const aiAnalysis = {
@@ -53,10 +55,29 @@ export default function UploadScreen() {
   const [image, setImage] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleCapture = () => {
+  const [status, requestPermission] = ImagePicker.useCameraPermissions();
+  
+  const handleCapture = async () => {
     // TODO: Implement camera capture
     console.log("Capture photo");
-    setImage("placeholder");
+
+    if (status?.status !== "granted") {
+      console.log("Camera permission not granted");
+      await requestPermission();
+      return;
+    }
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    console.log(result);
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+
   };
 
   const handleUpload = async () => {
@@ -64,7 +85,7 @@ export default function UploadScreen() {
     console.log("Upload photo");
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: "images",
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -415,12 +436,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   compatibleScroll: {
-    marginLeft: -20,
-    paddingLeft: 20,
+    marginLeft: -10,
+    marginRight: -10,
+    paddingRight: 10,
+    paddingLeft: 10,
   },
   compatibleCard: {
-    // width: width * 0.4,
-    width: "40%",
+    width: width * 0.4,
     marginRight: 12,
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: 16,

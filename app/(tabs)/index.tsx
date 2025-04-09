@@ -47,7 +47,7 @@ const suggestedOutfits = [
 export default function HomeScreen() {
   const router = useRouter();
   return (
-    <ScrollView style={styles.container} bounces={false}>
+    <ScrollView style={styles.container} bounces={false} contentContainerStyle={{ paddingBottom: 70 }}>
       <LinearGradient
         colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)', '#121212']}
         style={styles.headerGradient}

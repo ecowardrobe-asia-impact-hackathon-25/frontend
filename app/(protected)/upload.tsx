@@ -7,12 +7,12 @@ import {
   Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Card } from "../components/common/Card";
-import { Button } from "../components/common/Button";
-import { Text } from "../components/common/Text";
-import { theme } from "../constants/theme";
+import { Card } from "../../components/common/Card";
+import { Button } from "../../components/common/Button";
+import { Text } from "../../components/common/Text";
+import { theme } from "../../constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { PlaceholderImage } from "../components/common/PlaceholderImage";
+import { PlaceholderImage } from "../../components/common/PlaceholderImage";
 import { Item } from "@/types/item";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";

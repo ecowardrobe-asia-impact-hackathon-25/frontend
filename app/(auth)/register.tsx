@@ -1,29 +1,23 @@
-import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, Platform, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card } from '../components/common/Card';
-import { Button } from '../components/common/Button';
-import { Text } from '../components/common/Text';
-import { theme } from '../constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import { PlaceholderImage } from '../components/common/PlaceholderImage';
+import { Card } from '../../components/common/Card';
+import { Button } from '../../components/common/Button';
+import { Text } from '../../components/common/Text';
+import { theme } from '../../constants/theme';
 import { useRouter } from 'expo-router';
+import auth from '@react-native-firebase/auth';
+import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useRouter();
-
-  const handleLogin = () => {
-    // TODO: Implement actual login logic
-    console.log('Login:', { email, password });
-    // For now, just navigate to main app
-    navigation.navigate('/');
+  const handleRegister = async () => {
+    // Implement actual registration logic
+    const res = await auth().createUserWithEmailAndPassword(email, password);
+    console.log('Register button pressed');
   };
 
   return (
@@ -31,20 +25,14 @@ export default function LoginScreen() {
       colors={['#121212', '#1E1E1E']}
       style={styles.container}
     >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Text variant="h1" style={styles.logoText}>EW</Text>
-          </View>
-          <Text variant="h1" style={styles.title}>
-            Welcome Back
-          </Text>
-          <Text variant="caption" style={styles.subtitle}>
-            Sign in to continue
-          </Text>
-        </View>
+      <View style={styles.contentContainer}>
+        <Text variant="h1" style={styles.title}>Ecowardrobe</Text>
+        <Text style={styles.subtitle}>Your sustainable fashion assistant</Text>
+        
+        <Card style={styles.card}>
+          <Text variant="h2" style={styles.cardTitle}>Create Account</Text>
 
-        <Card style={styles.formCard}>
+          <Card style={styles.formCard}>
           <View style={styles.inputContainer}>
             <Ionicons
               name="mail-outline"
@@ -78,12 +66,11 @@ export default function LoginScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={{ color: theme.colors.primary }}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <Button title="Sign In" onPress={handleLogin} style={styles.button} />
-
+            <Button 
+              title="Sign Up" 
+              onPress={handleRegister} 
+              style={styles.button}
+            />
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text variant="caption" style={styles.dividerText}>or</Text>
@@ -95,19 +82,22 @@ export default function LoginScreen() {
               <Ionicons name="logo-google" size={24} color={theme.colors.text} />
               <Text>Google</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.socialButton}>
               <Ionicons name="logo-apple" size={24} color={theme.colors.text} />
               <Text>Apple</Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            )}
           </View>
-
-          <View style={styles.registerContainer}>
-            <Text variant="caption">Don't have an account? </Text>
-            {/* TODO: Implement actual registration logic */}
-            <TouchableOpacity onPress={() => navigation.navigate('/')}>
-              <Text style={{ color: theme.colors.primary }}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
+          
+          
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('/login')}
+            style={styles.linkContainer}
+          >
+            <Text style={styles.link}>Already have an account? Sign in</Text>
+          </TouchableOpacity>
+          </Card>
         </Card>
       </View>
     </LinearGradient>
@@ -118,34 +108,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  contentContainer: {
     flex: 1,
-    padding: theme.spacing.md,
-    justifyContent: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  logoContainer: {
-    width: 100,
-    height: 100,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  logoText: {
-    color: theme.colors.white,
-    fontSize: 36,
-    fontWeight: 'bold',
+    padding: theme.spacing.lg,
   },
   title: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.white,
   },
   subtitle: {
-    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+    color: theme.colors.textSecondary,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  cardTitle: {
+    marginBottom: theme.spacing.md,
+  },
+  button: {
+    marginTop: theme.spacing.md,
+  },
+  linkContainer: {
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+  },
+  link: {
+    color: theme.colors.primary,
   },
   formCard: {
     padding: theme.spacing.lg,
@@ -164,13 +156,6 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
     fontSize: theme.fontSize.base,
     color: theme.colors.text,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: theme.spacing.md,
-  },
-  button: {
-    marginBottom: theme.spacing.md,
   },
   divider: {
     flexDirection: 'row',
@@ -193,16 +178,12 @@ const styles = StyleSheet.create({
   socialButton: {
     flex: 1,
     flexDirection: 'row',
+    gap: theme.spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: theme.borderRadius.base,
     padding: theme.spacing.md,
     marginHorizontal: theme.spacing.xs,
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 }); 

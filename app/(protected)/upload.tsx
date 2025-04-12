@@ -17,11 +17,26 @@ import { Item } from "@/types/item";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
+import { useAuth } from "@/ctx/Session";
+import {
+  getFirestore,
+  collection,
+  doc,
+} from "@react-native-firebase/firestore";
+import storage from "@react-native-firebase/storage";
+import {
+  FIRESTORE_USER_COLLECTION,
+  FIRESTORE_WARDROBE_BUCKET,
+  FIRESTORE_USER_WARDROBE_COLLECTION,
+  FIRESTORE_WARDROBE_ITEM_COLLECTION,
+} from "@/firestore/constant";
+import { uploadWardrobeItem } from "@/firestore/wardrobe";
 
 const { width } = Dimensions.get("window");
 
 // Placeholder data for AI analysis
 const aiAnalysis = {
+  clothingType: "Shirt",
   fabric: "Cotton (100%)",
   longevity: "2-3 years",
   co2Footprint: "2.5 kg CO₂",
@@ -34,7 +49,7 @@ const aiAnalysis = {
 };
 
 // Add this after the aiAnalysis constant
-const compatibleItems = [
+const compatibleItems: Item[] = [
   {
     id: 1,
     name: "Blue Denim Jacket",
@@ -52,11 +67,13 @@ const compatibleItems = [
 ];
 
 export default function UploadScreen() {
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const router = useRouter();
 
+  const { user } = useAuth();
+
   const [status, requestPermission] = ImagePicker.useCameraPermissions();
-  
+
   const handleCapture = async () => {
     // TODO: Implement camera capture
     console.log("Capture photo");
@@ -75,9 +92,8 @@ export default function UploadScreen() {
     console.log(result);
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setImage(result.assets[0]);
     }
-
   };
 
   const handleUpload = async () => {
@@ -94,14 +110,31 @@ export default function UploadScreen() {
     console.log(result);
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setImage(result.assets[0]);
     }
   };
 
-  const handleAddToWardrobe = () => {
-    // TODO: Implement adding to wardrobe
-    console.log("Add to wardrobe");
-    // router.navigate("MatchResults");
+  const handleAddToWardrobe = async () => {
+    if (!image || !user) {
+      console.log("No image selected");
+      return;
+    }
+    await uploadWardrobeItem(
+      user.uid,
+      {
+        name: "New Item",
+        category: aiAnalysis.clothingType,
+        sustainabilityScore: 85,
+        clothingType: aiAnalysis.clothingType,
+        longevity: aiAnalysis.longevity,
+        co2Footprint: aiAnalysis.co2Footprint,
+        careTips: aiAnalysis.careTips,
+      },
+      image.uri,
+      image.mimeType
+    );
+    console.log("Item added to wardrobe");
+    router.navigate("/wardrobe");
   };
 
   const renderCompatibleItem = (item: Item) => (
@@ -174,9 +207,8 @@ export default function UploadScreen() {
           </Card>
         ) : (
           <Card style={styles.analysisCard}>
-            {/* <PlaceholderImage width="100%" height={300} text="Captured Item" /> */}
             <Image
-              source={image}
+              source={image.uri}
               style={{
                 width: "100%",
                 height: 300,

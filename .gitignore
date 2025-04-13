@@ -36,3 +36,7 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Google Files
+*.plist
+google-services.json

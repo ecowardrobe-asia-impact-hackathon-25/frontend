@@ -1,5 +1,5 @@
-import { ItemDetails } from "@/types/item";
-import { addDoc, collection } from "@react-native-firebase/firestore";
+import { Item, ItemDetails } from "@/types/item";
+import { addDoc, collection, serverTimestamp } from "@react-native-firebase/firestore";
 import { db } from "./db";
 import {
   FIRESTORE_USER_COLLECTION,
@@ -15,18 +15,23 @@ export async function uploadWardrobeItem(
   imageUri?: string,
   imageMimeType?: string
 ) {
+  console.log("Uploading wardrobe item:", userId, itemData, imageUri, imageMimeType);
   try {
+    const timestamp = serverTimestamp();
     const userWardrobe = collection(
       db,
       FIRESTORE_USER_COLLECTION,
       userId,
       FIRESTORE_USER_WARDROBE_COLLECTION
     );
-    const uploadedItem = await addDoc(userWardrobe, {
+    const userWardrobeItem: Omit<Item, "id" | "imageUrl"> = {
       name: itemData.name,
-      category: itemData.category,
+      clothingType: itemData.clothingType,
+      clothingCategory: itemData.clothingCategory,
       sustainabilityScore: itemData.sustainabilityScore,
-    });
+      createdAt: timestamp,
+    } 
+    const uploadedItem = await addDoc(userWardrobe, userWardrobeItem);
     const fileType = imageUri?.split(".").pop() || "jpg";
     const fileName = `${uploadedItem.id}.${fileType}`;
   
@@ -45,17 +50,13 @@ export async function uploadWardrobeItem(
       imageUrl,
     });
     const wardrobeItemCollection = collection(db, FIRESTORE_WARDROBE_ITEM_COLLECTION);
-    await addDoc(wardrobeItemCollection, {
+    const wardrobeItemDetails: ItemDetails = {
       id: `${userId}-${uploadedItem.id}`,
-      name: itemData.name,
-      category: itemData.category,
-      sustainabilityScore: itemData.sustainabilityScore,
-      clothingType: itemData.clothingType,
-      longevity: itemData.longevity,
-      co2Footprint: itemData.co2Footprint,
-      careTips: itemData.careTips,
       imageUrl,
-    });
+      createdAt: timestamp,
+      ...itemData,
+    }
+    await addDoc(wardrobeItemCollection, wardrobeItemDetails);
   } catch (error) {
     console.error("Error uploading wardrobe item:", error);
   }

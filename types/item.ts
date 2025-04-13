@@ -1,19 +1,14 @@
+import { FieldValue } from "@react-native-firebase/firestore";
+import { AiResponse } from "./ai-response";
+
 export type Item = {
-  id: number;
+  id: string;
   name: string;
-  category: string;
+  clothingType: string;
+  clothingCategory: string;
   sustainabilityScore: number;
   imageUrl?: string;
+  createdAt?: FieldValue;
 };
 
-export type ItemDetails = {
-  id: number;
-  name: string;
-  category: string;
-  sustainabilityScore: number;
-  imageUrl?: string;
-  clothingType: string;
-  longevity: string;
-  co2Footprint: string;
-  careTips: string[];
-};
+export type ItemDetails = Item & AiResponse

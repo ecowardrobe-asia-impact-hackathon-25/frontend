@@ -11,7 +11,7 @@ import { Card } from '../../../components/common/Card';
 import { Text } from '../../../components/common/Text';
 import { theme } from '../../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { PlaceholderImage } from '../../../components/common/PlaceholderImage';
+import { Image } from 'expo-image';
 
 const { width } = Dimensions.get('window');
 
@@ -35,7 +35,8 @@ const outfitSuggestions = [
       shoes: 'White Sneakers',
       accessories: 'Silver Watch'
     },
-    sustainabilityScore: 85
+    sustainabilityScore: 85,
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/generated-motif-454713-v8.firebasestorage.app/o/public%2Fphoto_2025-04-13_06-50-46.jpg?alt=media&token=c737a060-7410-44d4-8464-81644cb5a7a2",
   },
   {
     id: 2,
@@ -47,7 +48,8 @@ const outfitSuggestions = [
       shoes: 'Brown Loafers',
       accessories: 'Leather Belt'
     },
-    sustainabilityScore: 78
+    sustainabilityScore: 78,
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/generated-motif-454713-v8.firebasestorage.app/o/public%2Fphoto_2025-04-13_06-50-50.jpg?alt=media&token=c9d8f45c-9dd8-494f-b970-7d209b61b379"
   }
 ];
 
@@ -121,10 +123,9 @@ export default function MixMatchScreen() {
         >
           {outfitSuggestions.map(outfit => (
             <Card key={outfit.id} style={styles.outfitCard}>
-              <PlaceholderImage
-                width="100%"
-                height={200}
-                text={outfit.name.substring(0, 2)}
+              <Image
+                source={outfit.imageUrl}
+                style={{ width: '100%', height: 200 }}
               />
               <View style={styles.outfitInfo}>
                 <Text style={styles.outfitName}>{outfit.name}</Text>

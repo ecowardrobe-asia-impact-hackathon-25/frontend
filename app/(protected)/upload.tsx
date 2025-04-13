@@ -18,61 +18,97 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { useAuth } from "@/ctx/Session";
+import { uploadWardrobeItem } from "@/firestore/wardrobe";
+import { httpsCallable, getFunctions } from "@react-native-firebase/functions";
+import { AiResponse } from "@/types/ai-response";
+import { fetch } from "expo/fetch";
 import {
-  getFirestore,
   collection,
   doc,
+  getDocs,
+  limit,
+  query,
+  queryEqual,
+  where,
 } from "@react-native-firebase/firestore";
-import storage from "@react-native-firebase/storage";
+import { db } from "@/firestore/db";
 import {
   FIRESTORE_USER_COLLECTION,
-  FIRESTORE_WARDROBE_BUCKET,
   FIRESTORE_USER_WARDROBE_COLLECTION,
-  FIRESTORE_WARDROBE_ITEM_COLLECTION,
 } from "@/firestore/constant";
-import { uploadWardrobeItem } from "@/firestore/wardrobe";
+import { toPascalCase } from "@/utils/string";
 
 const { width } = Dimensions.get("window");
-
-// Placeholder data for AI analysis
-const aiAnalysis = {
-  clothingType: "Shirt",
-  fabric: "Cotton (100%)",
-  longevity: "2-3 years",
-  co2Footprint: "2.5 kg CO₂",
-  sustainabilityScore: 85,
-  careTips: [
-    "Machine wash cold",
-    "Line dry when possible",
-    "Iron on medium heat",
-  ],
-};
-
-// Add this after the aiAnalysis constant
-const compatibleItems: Item[] = [
-  {
-    id: 1,
-    name: "Blue Denim Jacket",
-    category: "Outerwear",
-    sustainabilityScore: 85,
-  },
-  { id: 2, name: "White T-Shirt", category: "Tops", sustainabilityScore: 90 },
-  { id: 3, name: "Black Jeans", category: "Bottoms", sustainabilityScore: 75 },
-  {
-    id: 4,
-    name: "Brown Leather Boots",
-    category: "Footwear",
-    sustainabilityScore: 65,
-  },
-];
 
 export default function UploadScreen() {
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const router = useRouter();
 
+  const [aiAnalysis, setAiAnalysis] = useState<AiResponse | null>(null);
+
+  const [loading, setLoading] = useState(false);
+
   const { user } = useAuth();
 
   const [status, requestPermission] = ImagePicker.useCameraPermissions();
+  const [compatibleItems, setCompatibleItems] = useState<Item[]>([]);
+
+  const getAiAnalysis = async (imageBase64: string) => {
+    try {
+      const response = await fetch(
+        "https://ai-image-860207425286.asia-southeast1.run.app",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            image: imageBase64,
+          }),
+        }
+      );
+      const data = await response.json();
+      console.log("AI Analysis Response:", data);
+      if (!data || data.error) {
+        console.error("Error in AI analysis response:", data.error);
+        setLoading(false);
+        return;
+      }
+      let compatCat: string;
+      if (data.clothingCategory === "top") {
+        compatCat = "bottom";
+      } else if (data.clothingCategory === "bottom") {
+        compatCat = "top";
+      } else {
+        compatCat = "accessory";
+      }
+      console.log("Compatible Category:", compatCat);
+      const matchingItems = await getDocs(
+        query(
+          collection(
+            db,
+            FIRESTORE_USER_COLLECTION,
+            user!.uid,
+            FIRESTORE_USER_WARDROBE_COLLECTION
+          ),
+          where("clothingCategory", "==", compatCat),
+          limit(3)
+        )
+      );
+      console.log("Matching Items:", matchingItems.docs.length);
+      if (!matchingItems.empty) {
+        setCompatibleItems(
+          matchingItems.docs.map(
+            (doc) => ({ id: doc.id, ...doc.data() } as Item)
+          )
+        );
+      }
+      setAiAnalysis(data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error getting AI analysis:", error);
+    }
+  };
 
   const handleCapture = async () => {
     // TODO: Implement camera capture
@@ -88,11 +124,14 @@ export default function UploadScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
+      base64: true,
     });
     console.log(result);
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets[0].base64) {
       setImage(result.assets[0]);
+      setLoading(true);
+      await getAiAnalysis(result.assets[0].base64);
     }
   };
 
@@ -105,30 +144,27 @@ export default function UploadScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
+      base64: true,
     });
 
-    console.log(result);
-
-    if (!result.canceled) {
+    if (!result.canceled && result.assets[0].base64) {
       setImage(result.assets[0]);
+      setLoading(true);
+      await getAiAnalysis(result.assets[0].base64);
     }
   };
 
   const handleAddToWardrobe = async () => {
-    if (!image || !user) {
+    if (!image || !user || !aiAnalysis) {
       console.log("No image selected");
       return;
     }
     await uploadWardrobeItem(
       user.uid,
       {
-        name: "New Item",
-        category: aiAnalysis.clothingType,
-        sustainabilityScore: 85,
-        clothingType: aiAnalysis.clothingType,
-        longevity: aiAnalysis.longevity,
-        co2Footprint: aiAnalysis.co2Footprint,
-        careTips: aiAnalysis.careTips,
+        name: toPascalCase(aiAnalysis.clothingType),
+        compatibleItems: compatibleItems.map((item) => item.id),
+        ...aiAnalysis,
       },
       image.uri,
       image.mimeType
@@ -139,15 +175,18 @@ export default function UploadScreen() {
 
   const renderCompatibleItem = (item: Item) => (
     <Card key={item.id} style={styles.compatibleCard}>
-      <PlaceholderImage
-        width="100%"
-        height={120}
-        text={item.name.substring(0, 2)}
+      <Image
+        source={item.imageUrl}
+        style={{
+          width: "100%",
+          height: 120,
+        }}
+        contentFit="cover"
       />
       <View style={styles.compatibleInfo}>
         <Text style={styles.compatibleName}>{item.name}</Text>
         <View style={styles.compatibleFooter}>
-          <Text style={styles.compatibleCategory}>{item.category}</Text>
+          <Text style={styles.compatibleCategory}>{item.clothingType}</Text>
           <View style={styles.sustainabilityBadge}>
             <Ionicons
               name="leaf-outline"
@@ -214,97 +253,99 @@ export default function UploadScreen() {
                 height: 300,
               }}
             />
-            <View style={styles.analysisContent}>
-              <Text variant="h3" style={styles.analysisTitle}>
-                AI Analysis
-              </Text>
+            {aiAnalysis && (
+              <View style={styles.analysisContent}>
+                <Text variant="h3" style={styles.analysisTitle}>
+                  AI Analysis
+                </Text>
 
-              <View style={styles.analysisGrid}>
-                <View style={styles.analysisItem}>
-                  <Ionicons
-                    name="shirt-outline"
-                    size={24}
-                    color={theme.colors.primary}
-                  />
-                  <View style={styles.analysisText}>
-                    <Text variant="caption">Fabric</Text>
-                    <Text>{aiAnalysis.fabric}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.analysisItem}>
-                  <Ionicons
-                    name="time-outline"
-                    size={24}
-                    color={theme.colors.primary}
-                  />
-                  <View style={styles.analysisText}>
-                    <Text variant="caption">Longevity</Text>
-                    <Text>{aiAnalysis.longevity}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.analysisItem}>
-                  <Ionicons
-                    name="leaf-outline"
-                    size={24}
-                    color={theme.colors.primary}
-                  />
-                  <View style={styles.analysisText}>
-                    <Text variant="caption">CO₂ Footprint</Text>
-                    <Text>{aiAnalysis.co2Footprint}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.analysisItem}>
-                  <Ionicons
-                    name="star-outline"
-                    size={24}
-                    color={theme.colors.primary}
-                  />
-                  <View style={styles.analysisText}>
-                    <Text variant="caption">Sustainability</Text>
-                    <Text>{aiAnalysis.sustainabilityScore}%</Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.careSection}>
-                <Text style={styles.careTitle}>Care Instructions</Text>
-                {aiAnalysis.careTips.map((tip, index) => (
-                  <View key={index} style={styles.careTip}>
+                <View style={styles.analysisGrid}>
+                  <View style={styles.analysisItem}>
                     <Ionicons
-                      name="checkmark-circle"
-                      size={20}
+                      name="shirt-outline"
+                      size={24}
                       color={theme.colors.primary}
                     />
-                    <Text style={styles.careTipText}>{tip}</Text>
+                    <View style={styles.analysisText}>
+                      <Text variant="caption">Fabric</Text>
+                      <Text>{aiAnalysis?.material}</Text>
+                    </View>
                   </View>
-                ))}
-              </View>
 
-              <View style={styles.compatibleSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Can Combine With</Text>
-                  <TouchableOpacity>
-                    <Text style={styles.seeAll}>See All</Text>
-                  </TouchableOpacity>
+                  <View style={styles.analysisItem}>
+                    <Ionicons
+                      name="time-outline"
+                      size={24}
+                      color={theme.colors.primary}
+                    />
+                    <View style={styles.analysisText}>
+                      <Text variant="caption">Longevity</Text>
+                      <Text>{aiAnalysis.longevityScore}/10</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.analysisItem}>
+                    <Ionicons
+                      name="leaf-outline"
+                      size={24}
+                      color={theme.colors.primary}
+                    />
+                    <View style={styles.analysisText}>
+                      <Text variant="caption">CO₂ Footprint</Text>
+                      <Text>{aiAnalysis.co2Consumption}kg</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.analysisItem}>
+                    <Ionicons
+                      name="star-outline"
+                      size={24}
+                      color={theme.colors.primary}
+                    />
+                    <View style={styles.analysisText}>
+                      <Text variant="caption">Sustainability</Text>
+                      <Text>{aiAnalysis.sustainabilityScore}/10</Text>
+                    </View>
+                  </View>
                 </View>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.compatibleScroll}
-                >
-                  {compatibleItems.map((item) => renderCompatibleItem(item))}
-                </ScrollView>
-              </View>
 
-              <Button
-                title="Add to Wardrobe"
-                onPress={handleAddToWardrobe}
-                style={styles.addButton}
-              />
-            </View>
+                <View style={styles.careSection}>
+                  <Text style={styles.careTitle}>Care Instructions</Text>
+                  {aiAnalysis.maintenanceTips.map((tip, index) => (
+                    <View key={index} style={styles.careTip}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                      <Text style={styles.careTipText}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.compatibleSection}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Can Combine With</Text>
+                    <TouchableOpacity>
+                      <Text style={styles.seeAll}>See All</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.compatibleScroll}
+                  >
+                    {compatibleItems.map((item) => renderCompatibleItem(item))}
+                  </ScrollView>
+                </View>
+
+                <Button
+                  title="Add to Wardrobe"
+                  onPress={handleAddToWardrobe}
+                  style={styles.addButton}
+                />
+              </View>
+            )}
           </Card>
         )}
       </ScrollView>

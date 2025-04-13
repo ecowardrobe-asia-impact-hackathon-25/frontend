@@ -37,10 +37,6 @@ yarn-error.*
 
 app-example
 
-# local build
-android
-ios
-
 # Google Files
 *.plist
 google-services.json

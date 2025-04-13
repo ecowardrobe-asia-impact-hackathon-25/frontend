@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -14,97 +14,45 @@ import { Card } from "../../../components/common/Card";
 import { Text } from "../../../components/common/Text";
 import { theme } from "../../../constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { PlaceholderImage } from "../../../components/common/PlaceholderImage";
 import { Item, ItemDetails } from "@/types/item";
 import { useAuth } from "@/ctx/Session";
-import { collection, getFirestore } from "@react-native-firebase/firestore";
+import {
+  collection,
+  getFirestore,
+} from "@react-native-firebase/firestore";
 import {
   FIRESTORE_USER_COLLECTION,
   FIRESTORE_USER_WARDROBE_COLLECTION,
   FIRESTORE_WARDROBE_ITEM_COLLECTION,
 } from "@/firestore/constant";
 import { useFocusEffect } from "expo-router";
+import { toPascalCase } from "@/utils/string";
 
 const { width } = Dimensions.get("window");
 
-// Placeholder data for AI analysis
-const aiAnalysis = {
-  clothingType: "Cotton (100%)",
-  longevity: "2-3 years",
-  co2Footprint: "2.5 kg CO₂",
-  sustainabilityScore: 85,
-  careTips: [
-    "Machine wash cold",
-    "Line dry when possible",
-    "Iron on medium heat",
-  ],
+const categoryIcon: Record<string, string> = {
+  tops: "shirt-outline",
+  shirt: "shirt-outline",
+  bottoms: "layers-outline",
+  outerwear: "jacket-outline",
+  footwear: "footsteps-outline",
+  accessories: "watch-outline",
 };
-
-const compatibleItems = [
-  {
-    id: 1,
-    name: "Blue Denim Jacket",
-    category: "Outerwear",
-    sustainabilityScore: 85,
-  },
-  { id: 2, name: "White T-Shirt", category: "Tops", sustainabilityScore: 90 },
-  { id: 3, name: "Black Jeans", category: "Bottoms", sustainabilityScore: 75 },
-  {
-    id: 4,
-    name: "Brown Leather Boots",
-    category: "Footwear",
-    sustainabilityScore: 65,
-  },
-];
-
-const pccategories = [
-  { id: "tops", label: "Tops", icon: "shirt-outline" },
-  { id: "bottoms", label: "Bottoms", icon: "layers-outline" },
-  // { id: 'outerwear', label: 'outerwear', icon: 'jacket-outline' },
-  { id: "footwear", label: "Footwear", icon: "footsteps-outline" },
-  { id: "accessories", label: "Accessories", icon: "watch-outline" },
-];
-
-const items = [
-  {
-    id: 1,
-    name: "Blue Denim Jacket",
-    category: "Outerwear",
-    sustainabilityScore: 85,
-  },
-  { id: 2, name: "White T-Shirt", category: "Tops", sustainabilityScore: 90 },
-  { id: 3, name: "Black Jeans", category: "Bottoms", sustainabilityScore: 75 },
-  {
-    id: 4,
-    name: "Blue Dress Shirt",
-    category: "Tops",
-    sustainabilityScore: 80,
-  },
-  {
-    id: 5,
-    name: "Brown Leather Boots",
-    category: "Footwear",
-    sustainabilityScore: 65,
-  },
-  {
-    id: 6,
-    name: "Beige Chino Pants",
-    category: "Bottoms",
-    sustainabilityScore: 82,
-  },
-];
 
 const renderCompatibleItem = (item: Item) => (
   <Card key={item.id} style={styles.compatibleCard}>
-    <PlaceholderImage
-      width="100%"
-      height={120}
-      text={item.name.substring(0, 2)}
+    <Image
+      source={item.imageUrl}
+      style={{
+        width: "100%",
+        height: 120,
+      }}
+      contentFit="cover"
     />
     <View style={styles.compatibleInfo}>
       <Text style={styles.compatibleName}>{item.name}</Text>
       <View style={styles.compatibleFooter}>
-        <Text style={styles.compatibleCategory}>{item.category}</Text>
+        <Text style={styles.compatibleCategory}>{item.clothingType}</Text>
         <View style={styles.sustainabilityBadge}>
           <Ionicons name="leaf-outline" size={14} color={theme.colors.white} />
           <Text style={styles.sustainabilityScore}>
@@ -118,8 +66,9 @@ const renderCompatibleItem = (item: Item) => (
 
 export default function WardrobeScreen() {
   const [items, setItems] = useState<Item[]>([]);
-  const [categories, setCategories] =
-    useState<{ id: string; label: string }[]>([]);
+  const [categories, setCategories] = useState<
+    { id: string; label: string; iconName: string }[]
+  >([]);
   const { user } = useAuth();
 
   useFocusEffect(
@@ -137,12 +86,17 @@ export default function WardrobeScreen() {
           ...doc.data(),
         })) as unknown as Item[];
 
-        const categories: { id: string; label: string }[] = [];
+        const categories: { id: string; label: string; iconName: string }[] =
+          [];
         const uniqueCategories = new Set(
-          itemsData.map((item) => item.category)
+          itemsData.map((item) => item.clothingType)
         );
         for (const category of uniqueCategories) {
-          categories.push({ id: category, label: category });
+          categories.push({
+            id: category,
+            label: toPascalCase(category),
+            iconName: categoryIcon[category] ?? "help-outline",
+          });
         }
 
         setCategories(categories);
@@ -156,12 +110,15 @@ export default function WardrobeScreen() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
 
-  const filteredItems =
-    selectedCategory === null
-      ? items
-      : items.filter(
-          (item) => item.category.toLowerCase() === selectedCategory
-        );
+  const filteredItems = useMemo(
+    () =>
+      selectedCategory === null
+        ? items
+        : items.filter(
+            (item) => item.clothingType.toLowerCase() === selectedCategory
+          ),
+    [items, selectedCategory]
+  );
 
   const handleItemPress = (item: Item) => {
     setSelectedItem(item);
@@ -173,15 +130,17 @@ export default function WardrobeScreen() {
       style={styles.itemCard}
       onPress={() => handleItemPress(item)}
     >
-      <PlaceholderImage
-        width="100%"
-        height={150}
-        text={item.name.substring(0, 2)}
+      <Image
+        source={item.imageUrl}
+        style={{
+          width: "100%",
+          height: 150,
+        }}
       />
       <View style={styles.itemInfo}>
         <Text style={styles.itemName}>{item.name}</Text>
         <View style={styles.itemFooter}>
-          <Text style={styles.itemCategory}>{item.category}</Text>
+          <Text style={styles.itemCategory}>{toPascalCase(item.clothingType)}</Text>
           <View style={styles.sustainabilityBadge}>
             <Text style={styles.sustainabilityScore}>
               {item.sustainabilityScore}
@@ -194,7 +153,7 @@ export default function WardrobeScreen() {
 
   return (
     <>
-      <ScrollView style={styles.container} bounces={false}>
+      <ScrollView style={styles.container} bounces={false} contentContainerStyle={{ paddingBottom: 90 }}>
         <LinearGradient
           colors={[
             "rgba(255,255,255,0.1)",
@@ -244,11 +203,15 @@ export default function WardrobeScreen() {
                     )
                   }
                 >
-                  {/* <Ionicons 
-                    name={category.icon as any} 
-                    size={20} 
-                    color={selectedCategory === category.id ? theme.colors.white : theme.colors.text} 
-                  /> */}
+                  <Ionicons
+                    name={category.iconName as any}
+                    size={20}
+                    color={
+                      selectedCategory === category.id
+                        ? theme.colors.white
+                        : theme.colors.text
+                    }
+                  />
                   <Text
                     style={[
                       styles.categoryLabel,
@@ -280,6 +243,7 @@ export default function WardrobeScreen() {
           itemId={`${user.uid}-${selectedItem.id}`}
           visible={isAnalysisVisible}
           onClose={() => setIsAnalysisVisible(false)}
+          items={items}
         />
       )}
     </>
@@ -290,14 +254,20 @@ function ItemDetailModal({
   itemId,
   visible,
   onClose,
+  items,
 }: {
   itemId: string;
   visible: boolean;
   onClose: () => void;
+  items: Item[];
 }) {
-  const [item, setItem] = useState<(Item & ItemDetails) | null>(null);
+  const [item, setItem] = useState<ItemDetails | null>(null);
+  const [compatibleItems, setCompatibleItems] = useState<Item[]>([]);
+
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     const fetchItemDetails = async () => {
       const item = await collection(
         getFirestore(),
@@ -306,9 +276,16 @@ function ItemDetailModal({
         .where("id", "==", itemId)
         .get();
       if (!item.empty) {
-        const itemData = item.docs[0].data() as Item & ItemDetails;
-        console.log("Item data:", itemData);
+        const itemData = item.docs[0].data() as ItemDetails;
+        if (!itemData.compatibleItems) {
+          itemData.compatibleItems = [];
+        }
         setItem(itemData);
+        if (itemData.compatibleItems && itemData.compatibleItems.length > 0) {
+          setCompatibleItems(
+            items.filter((i) => itemData.compatibleItems?.includes(i.id))
+          );
+        }
       }
     };
     fetchItemDetails();
@@ -356,7 +333,7 @@ function ItemDetailModal({
                   />
                   <View style={styles.analysisText}>
                     <Text variant="caption">Fabric</Text>
-                    <Text>{aiAnalysis.clothingType}</Text>
+                    <Text>{item.clothingType}</Text>
                   </View>
                 </View>
 
@@ -368,7 +345,7 @@ function ItemDetailModal({
                   />
                   <View style={styles.analysisText}>
                     <Text variant="caption">Longevity</Text>
-                    <Text>{aiAnalysis.longevity}</Text>
+                    <Text>{item.longevityScore}</Text>
                   </View>
                 </View>
 
@@ -380,7 +357,7 @@ function ItemDetailModal({
                   />
                   <View style={styles.analysisText}>
                     <Text variant="caption">CO₂ Footprint</Text>
-                    <Text>{aiAnalysis.co2Footprint}</Text>
+                    <Text>{item.co2Consumption}</Text>
                   </View>
                 </View>
 
@@ -399,7 +376,7 @@ function ItemDetailModal({
 
               <View style={styles.careSection}>
                 <Text style={styles.careTitle}>Care Instructions</Text>
-                {aiAnalysis.careTips.map((tip, index) => (
+                {item.maintenanceTips.map((tip, index) => (
                   <View key={index} style={styles.careTip}>
                     <Ionicons
                       name="checkmark-circle"
@@ -411,21 +388,25 @@ function ItemDetailModal({
                 ))}
               </View>
 
-              <View style={styles.compatibleSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Can Combine With</Text>
-                  <TouchableOpacity>
-                    <Text style={styles.seeAll}>See All</Text>
-                  </TouchableOpacity>
+              {item.compatibleItems && item.compatibleItems.length > 0 && (
+                <View style={styles.compatibleSection}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Can Combine With</Text>
+                    <TouchableOpacity>
+                      <Text style={styles.seeAll}>See All</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.compatibleScroll}
+                  >
+                    {compatibleItems.map((item) =>
+                      renderCompatibleItem(item)
+                    )}
+                  </ScrollView>
                 </View>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.compatibleScroll}
-                >
-                  {compatibleItems.map((item) => renderCompatibleItem(item))}
-                </ScrollView>
-              </View>
+              )}
             </View>
           </ScrollView>
         </View>
